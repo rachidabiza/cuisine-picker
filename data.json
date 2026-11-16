@@ -1,0 +1,22 @@
+{
+  "remaining": [
+    "Afghanistan", "Algeria", "Argentina", "Armenia", "Bangladesh",
+    "Belgium", "Bolivia", "Bosnia and Herzegovina", "Brazil", "Bulgaria",
+    "Cambodia", "Chile", "China", "Colombia", "Democratic Republic of the Congo",
+    "Ecuador", "Egypt", "France", "Georgia", "Greece",
+    "Hungary", "India", "Indonesia", "Iran", "Italy",
+    "Jamaica", "Japan", "Kazakhstan", "Laos", "Lebanon",
+    "Madagascar", "Malaysia", "Mauritius", "Mexico", "Mongolia",
+    "Morocco", "Nepal", "Norway", "Pakistan", "Palestine",
+    "Peru", "Philippines", "Poland", "Portugal", "Russia",
+    "Rwanda", "Senegal", "South Africa", "South Korea", "Spain",
+    "Sri Lanka", "Syria", "Thailand", "Tunisia", "Turkey (Türkiye)",
+    "Ukraine", "Uruguay", "Uzbekistan", "Vietnam"
+  ],
+  "historyList": [
+    {
+      "name": "Haiti",
+      "date": "Initial Setup (Month #1)"
+    }
+  ]
+}
