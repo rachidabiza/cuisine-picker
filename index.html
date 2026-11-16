@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Cuisine Journey (GitHub Synced)</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #e11d48;
+      --success: #059669;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 0 20px;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    h2 { text-align: center; color: var(--primary); margin: 0 0 8px 0; }
+    #sync-status {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text-muted);
+    }
+    .tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+      background: #e2e8f0;
+      padding: 4px;
+      border-radius: 8px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 6px;
+      border: none;
+      background: transparent;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 6px;
+      color: var(--text-muted);
+    }
+    .tab-btn.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    button {
+      padding: 12px 16px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background-color: var(--primary); color: white; width: 100%; }
+    .btn-primary:hover:not(:disabled) { background-color: var(--primary-hover); }
+    .btn-danger { background-color: var(--danger); color: white; }
+    .btn-success { background-color: var(--success); color: white; }
+    #result-box {
+      margin-top: 20px;
+      padding: 24px;
+      text-align: center;
+      background: #eff6ff;
+      border: 2px dashed #93c5fd;
+      border-radius: 10px;
+    }
+    #result {
+      font-size: 32px;
+      font-weight: bold;
+      color: #1e40af;
+      margin: 10px 0;
+    }
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 15px;
+    }
+    .action-row { display: flex; gap: 10px; margin-top: 15px; }
+    .list-container {
+      max-height: 350px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 14px;
+    }
+    .item-row:last-child { border-bottom: none; }
+    .input-group { display: flex; gap: 8px; margin-bottom: 12px; }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Global Cuisine Journey</h2>
+    <div id="sync-status">Checking GitHub connection...</div>
+    
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('picker', this)">Picker</button>
+      <button class="tab-btn" onclick="switchTab('remaining', this)">Remaining (<span id="rem-tab-count">0</span>)</button>
+      <button class="tab-btn" onclick="switchTab('picked', this)">History (<span id="hist-tab-count">0</span>)</button>
+      <button class="tab-btn" onclick="switchTab('settings', this)">GitHub Sync</button>
+    </div>
+
+    <!-- TAB 1: PICKER -->
+    <div id="tab-picker" class="tab-content active">
+      <div class="stats-row">
+        <span>Remaining: <strong id="count">0</strong></span>
+        <span>Explored: <strong id="explored-count">0</strong> / 60</span>
+      </div>
+
+      <button id="pick-btn" class="btn-primary" onclick="pickRandomCuisine()">Pick Next Cuisine (Monthly)</button>
+      
+      <div id="result-box">
+        <div style="font-size: 13px; color: var(--text-muted); text-transform: uppercase;">Current Selection</div>
+        <div id="result">Loading...</div>
+        <div id="result-date" style="font-size: 13px; color: var(--text-muted);"></div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-danger" style="flex:1; font-size:14px; padding:10px;" onclick="undoLastPick()">Undo Last Pick</button>
+        <button class="btn-success" style="flex:1; font-size:14px; padding:10px;" onclick="loadFromGitHub()">Refresh Sync</button>
+      </div>
+    </div>
+
+    <!-- TAB 2: REMAINING POOL -->
+    <div id="tab-remaining" class="tab-content">
+      <div class="input-group">
+        <input type="text" id="new-cuisine-input" placeholder="Add custom cuisine..." style="margin-bottom:0;" />
+        <button class="btn-success" style="padding: 10px 16px; font-size: 14px;" onclick="addCuisine()">Add</button>
+      </div>
+      <div class="list-container" id="remaining-list-container"></div>
+    </div>
+
+    <!-- TAB 3: PICKED HISTORY -->
+    <div id="tab-picked" class="tab-content">
+      <div class="list-container" id="history-list-container"></div>
+    </div>
+
+    <!-- TAB 4: GITHUB SYNC & BACKUP -->
+    <div id="tab-settings" class="tab-content">
+      <h3 style="font-size: 16px; margin-top:0;">GitHub Database Settings</h3>
+      <p style="font-size: 13px; color: var(--text-muted);">Connect your GitHub repository so picks save directly to <code>data.json</code> across all devices:</p>
+      
+      <label>GitHub Username</label>
+      <input type="text" id="gh-owner" placeholder="e.g., your-username" />
+
+      <label>Repository Name</label>
+      <input type="text" id="gh-repo" placeholder="e.g., cuisine-picker" />
+
+      <label>Personal Access Token (Fine-Grained)</label>
+      <input type="password" id="gh-token" placeholder="github_pat_..." />
+
+      <button class="btn-primary" onclick="saveGitHubConfig()">Save & Connect to GitHub</button>
+      
+      <hr style="border:none; border-top:1px solid #e2e8f0; margin: 20px 0;">
+      <button class="btn-success" style="width:100%; font-size:14px;" onclick="downloadJSONBackup()">Download Local JSON Backup</button>
+    </div>
+  </div>
+
+  <script>
+    const FILE_PATH = 'data.json';
+    let remaining = [];
+    let historyList = [];
+    let currentFileSha = null;
+
+    function getConfig() {
+      return {
+        owner: localStorage.getItem('gh_owner') || '',
+        repo: localStorage.getItem('gh_repo') || '',
+        token: localStorage.getItem('gh_token') || ''
+      };
+    }
+
+    function setStatus(msg, color = '#64748b') {
+      const el = document.getElementById('sync-status');
+      el.innerText = msg;
+      el.style.color = color;
+    }
+
+    function encodeBase64(str) {
+      return btoa(unescape(encodeURIComponent(str)));
+    }
+    function decodeBase64(str) {
+      return decodeURIComponent(escape(atob(str)));
+    }
+
+    async function loadFromGitHub() {
+      const { owner, repo, token } = getConfig();
+      document.getElementById('gh-owner').value = owner;
+      document.getElementById('gh-repo').value = repo;
+      document.getElementById('gh-token').value = token;
+
+      if (!owner || !repo || !token) {
+        setStatus('Not connected — Open "GitHub Sync" tab to link repository', '#e11d48');
+        document.getElementById('result').innerText = 'Setup Required';
+        return;
+      }
+
+      setStatus('Syncing with GitHub...', '#2563eb');
+      try {
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/${FILE_PATH}?t=${Date.now()}`;
+        const res = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (!res.ok) throw new Error(`GitHub Error (${res.status})`);
+        const data = await res.json();
+        currentFileSha = data.sha;
+        const parsed = JSON.parse(decodeBase64(data.content));
+        
+        remaining = parsed.remaining || [];
+        historyList = parsed.historyList || [];
+        updateUI();
+        setStatus('Synced with GitHub (data.json)', '#059669');
+      } catch (err) {
+        setStatus(`Sync failed: ${err.message}`, '#e11d48');
+      }
+    }
+
+    async function saveToGitHub(commitMessage) {
+      const { owner, repo, token } = getConfig();
+      if (!owner || !repo || !token) {
+        alert('Please configure your GitHub settings first.');
+        return;
+      }
+
+      setStatus('Saving to GitHub...', '#2563eb');
+      document.getElementById('pick-btn').disabled = true;
+
+      try {
+        const contentStr = JSON.stringify({ remaining, historyList }, null, 2);
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/${FILE_PATH}`;
+        
+        const res = await fetch(url, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: commitMessage,
+            content: encodeBase64(contentStr),
+            sha: currentFileSha
+          })
+        });
+
+        if (!res.ok) throw new Error(`Save failed (${res.status})`);
+        const result = await res.json();
+        currentFileSha = result.content.sha;
+        updateUI();
+        setStatus('Saved & synced to GitHub!', '#059669');
+      } catch (err) {
+        setStatus(`Save error: ${err.message}. Click Refresh Sync.`, '#e11d48');
+      } finally {
+        document.getElementById('pick-btn').disabled = false;
+      }
+    }
+
+    function saveGitHubConfig() {
+      const owner = document.getElementById('gh-owner').value.trim();
+      const repo = document.getElementById('gh-repo').value.trim();
+      const token = document.getElementById('gh-token').value.trim();
+      
+      localStorage.setItem('gh_owner', owner);
+      localStorage.setItem('gh_repo', repo);
+      localStorage.setItem('gh_token', token);
+      loadFromGitHub();
+    }
+
+    function updateUI() {
+      document.getElementById('count').innerText = remaining.length;
+      document.getElementById('rem-tab-count').innerText = remaining.length;
+      document.getElementById('explored-count').innerText = historyList.length;
+      document.getElementById('hist-tab-count').innerText = historyList.length;
+
+      if (historyList.length > 0) {
+        const lastPick = historyList[historyList.length - 1];
+        document.getElementById('result').innerText = lastPick.name;
+        document.getElementById('result-date').innerText = `Logged: ${lastPick.date}`;
+      } else {
+        document.getElementById('result').innerText = 'None picked yet';
+        document.getElementById('result-date').innerText = '';
+      }
+
+      const remContainer = document.getElementById('remaining-list-container');
+      remContainer.innerHTML = remaining.length === 0 ? '<div style="text-align:center; padding:20px; color:#64748b;">No remaining cuisines!</div>' : '';
+      remaining.forEach((item, index) => {
+        remContainer.innerHTML += `
+          <div class="item-row">
+            <span>${index + 1}. ${item}</span>
+            <button onclick="removeCuisine(${index})" style="background:none; border:none; color:#e11d48; cursor:pointer; font-weight:bold;">✕</button>
+          </div>
+        `;
+      });
+
+      const histContainer = document.getElementById('history-list-container');
+      histContainer.innerHTML = historyList.length === 0 ? '<div style="text-align:center; padding:20px; color:#64748b;">No history yet!</div>' : '';
+      historyList.slice().reverse().forEach((item, index) => {
+        const origIdx = historyList.length - 1 - index;
+        histContainer.innerHTML += `
+          <div class="item-row">
+            <div>
+              <strong>${item.name}</strong><br>
+              <span style="font-size:11px; color:#64748b;">${item.date}</span>
+            </div>
+            <button onclick="moveToRemaining(${origIdx})" style="font-size:12px; padding:4px 8px; background:#e2e8f0; border:none; border-radius:4px; cursor:pointer;">Move to Pool</button>
+          </div>
+        `;
+      });
+    }
+
+    function switchTab(tabName, btnEl) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+      btnEl.classList.add('active');
+    }
+
+    async function pickRandomCuisine() {
+      if (remaining.length === 0) return alert('All cuisines have been picked!');
+      const randomIndex = Math.floor(Math.random() * remaining.length);
+      const picked = remaining.splice(randomIndex, 1)[0];
+      const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      historyList.push({ name: picked, date: dateStr });
+      await saveToGitHub(`Picked ${picked} (${dateStr})`);
+    }
+
+    async function undoLastPick() {
+      if (historyList.length === 0) return alert('No picks to undo!');
+      const last = historyList.pop();
+      remaining.push(last.name);
+      await saveToGitHub(`Undo pick: ${last.name}`);
+    }
+
+    async function addCuisine() {
+      const input = document.getElementById('new-cuisine-input');
+      const val = input.value.trim();
+      if (!val) return;
+      remaining.push(val);
+      input.value = '';
+      await saveToGitHub(`Added ${val} to pool`);
+    }
+
+    async function removeCuisine(index) {
+      const removed = remaining.splice(index, 1)[0];
+      await saveToGitHub(`Removed ${removed} from pool`);
+    }
+
+    async function moveToRemaining(historyIndex) {
+      const item = historyList.splice(historyIndex, 1)[0];
+      remaining.push(item.name);
+      await saveToGitHub(`Moved ${item.name} back to pool`);
+    }
+
+    function downloadJSONBackup() {
+      const blob = new Blob([JSON.stringify({ remaining, historyList }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cuisine_journey_backup_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    window.onload = loadFromGitHub;
+  </script>
+</body>
+</html>
